@@ -4,6 +4,37 @@ import json
 
 global parse_url
 
+schemaDataMapping = {
+    "name": "name",
+    "description": "description",
+    "url": "url",
+    "author": "author",
+    "published": "datePublished",
+    "preparationTime": "prepTime",
+    "cookingTime": "cookTime",
+    "totalTime": "cookTime",
+    "yieldsFor": "recipeYield",
+    "ingredients": "recipeIngredient",
+    "instructions": "recipeInstructions",
+    "tags": "keywords",
+    "nutrition": {
+        "nutrition": {
+            "calories": "calories",
+            "calorieCount": "calorieContent",
+            "carbohydrate": "carbohydrateContent",
+            "cholesterol": "cholesterolContent",
+            "fat": "fatContent",
+            "fiber": "fiberContent",
+            "protein": "proteinContent",
+            "saturatedFat": "saturatedFatContent",
+            "sodium": "sodiumContent",
+            "sugar": "sugarContent",
+            "transFat": "transFatContent",
+            "unsaturatedFat": "unsaturatedFatContent"
+        }
+    }
+}
+
 def getPageSource(url):
     res = requests.get(url)
     return res.text
@@ -30,6 +61,7 @@ def refineSchema(data, isGraph=None):
     if len(data) == 0:
         return False
     refinedData['name'] = recipeData['name']
+    refinedData['description'] = recipeData['description'] if 'description' in recipeData else None
     refinedData['url'] = recipeData['url'] if 'url' in recipeData else parse_url
     refinedData['datePublished'] = recipeData['datePublished'] if 'datePublished' in recipeData else None
     refinedData['prepTime'] = recipeData['prepTime'] if 'prepTime' in recipeData else None
@@ -48,6 +80,8 @@ def refineSchema(data, isGraph=None):
     if 'author' in recipeData:
         if isinstance(recipeData['author'], dict):
             refinedData['author'] = recipeData['author']['name'] if 'name' in recipeData['author'] else None
+        else:
+            refinedData['author'] = recipeData['author']
     else:
         refinedData['author'] = recipeData['author'] if 'author' in recipeData else None
     
@@ -58,7 +92,8 @@ def refineSchema(data, isGraph=None):
         refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient'].split(',')))
     else:
         refinedData['recipeIngredient'] = [recipeData['recipeIngredient']] if 'recipeIngredient' in recipeData else None
-    refinedData['recipeIngredient'] = [i for i in recipeData['recipeIngredient'] if i]
+    if isinstance(refinedData['recipeIngredient'], dict) and len(refinedData['recipeIngredient']):
+        refinedData['recipeIngredient'] = [i for i in recipeData['recipeIngredient'] if i]
 
     #recipeInstructions
     if 'recipeInstructions' in recipeData and (isinstance(recipeData['recipeInstructions'], dict) or isinstance(recipeData['recipeInstructions'], list)):
@@ -86,7 +121,8 @@ def refineSchema(data, isGraph=None):
             refinedData['recipeInstructions'] = [recipeData['recipeInstructions']]
     else:
         refinedData['recipeInstructions'] = None
-    refinedData['recipeInstructions'] = [i for i in refinedData['recipeInstructions'] if i]
+    if isinstance(refinedData['recipeInstructions'], dict) and len(refinedData['recipeInstructions']):
+        refinedData['recipeInstructions'] = [i for i in refinedData['recipeInstructions'] if i]
 
     #keywords
     if 'keywords' in recipeData and isinstance(recipeData['keywords'], str):
@@ -95,7 +131,8 @@ def refineSchema(data, isGraph=None):
         refinedData['keywords'] = list(map(str.strip, recipeData['keywords']))
     else:
         refinedData['keywords'] = []
-    refinedData['keywords'] = [i for i in refinedData['keywords'] if i]
+    if isinstance(refinedData['keywords'], dict) and len(refinedData['keywords']):
+        refinedData['keywords'] = [i for i in refinedData['keywords'] if i] if len(refinedData['keywords']) else None
 
     #nutrition
     if 'nutrition' in recipeData and (isinstance(recipeData['nutrition'], dict) or isinstance(recipeData['nutrition'], list)):
@@ -120,8 +157,16 @@ def refineSchema(data, isGraph=None):
 
 
 def transformSchemaToResponse(data):
-    return data
-
+    transformedData = dict()
+    for key in schemaDataMapping:
+        if isinstance(schemaDataMapping[key], dict):
+            transformedData[key] = dict()
+            for k in schemaDataMapping[key].values():
+                for j in k:
+                    transformedData[key][j] = data[key][schemaDataMapping[key][key][j]]
+        else:
+            transformedData[key] = data[schemaDataMapping[key]]
+    return transformedData
 
 def extractData(url):
     global parse_url
