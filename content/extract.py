@@ -31,7 +31,6 @@ def refineSchema(data, isGraph=None):
         return False
     refinedData['name'] = recipeData['name']
     refinedData['url'] = recipeData['url'] if 'url' in recipeData else parse_url
-    refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient'])) if 'recipeIngredient' in recipeData else None
     refinedData['datePublished'] = recipeData['datePublished'] if 'datePublished' in recipeData else None
     refinedData['prepTime'] = recipeData['prepTime'] if 'prepTime' in recipeData else None
     refinedData['cookTime'] = recipeData['cookTime'] if 'cookTime' in recipeData else None
@@ -51,6 +50,15 @@ def refineSchema(data, isGraph=None):
             refinedData['author'] = recipeData['author']['name'] if 'name' in recipeData['author'] else None
     else:
         refinedData['author'] = recipeData['author'] if 'author' in recipeData else None
+    
+    #recipeIngredient
+    if 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], dict) or isinstance(recipeData['recipeIngredient'], list)):
+        refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient']))
+    elif 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], dict) ):
+        refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient'].split(',')))
+    else:
+        refinedData['recipeIngredient'] = [recipeData['recipeIngredient']] if 'recipeIngredient' in recipeData else None
+    refinedData['recipeIngredient'] = [i for i in recipeData['recipeIngredient'] if i]
 
     #recipeInstructions
     if 'recipeInstructions' in recipeData and (isinstance(recipeData['recipeInstructions'], dict) or isinstance(recipeData['recipeInstructions'], list)):
@@ -60,24 +68,25 @@ def refineSchema(data, isGraph=None):
                 refinedData['recipeInstructions'].append(instruction['text'].strip())
     elif 'recipeInstructions' in recipeData and isinstance(recipeData['recipeInstructions'], str):
         refinedData['recipeInstructions'] = []
-        if "ol" in refinedData['recipeInstructions'] or "ul" in refinedData['recipeInstructions']:
-            html_soup = soup(refinedData['recipeInstructions'], "html.parser")
+        if "<ol" in recipeData['recipeInstructions'] or "<ul" in recipeData['recipeInstructions']:
+            html_soup = soup(recipeData['recipeInstructions'], "html.parser")
             ultag = html_soup.find('ul')
             oltag = html_soup.find('ol')
-            print(oltag)
             if ultag != None:
                 for litag in ultag.find_all('li'):
                     refinedData['recipeInstructions'].append((litag.text).strip())
             elif oltag != None:
                 for litag in oltag.find_all('li'):
-                    print(litag)
                     refinedData['recipeInstructions'].append((litag.text).strip())
-        elif "\n" in refinedData['recipeInstructions']:
-            refinedData['recipeInstructions'] = list(map(str.strip, refinedData['recipeInstructions'].split("\n")))
+            else:
+                refinedData['recipeInstructions'] = [recipeData['recipeInstructions']]
+        elif "\n" in recipeData['recipeInstructions']:
+            refinedData['recipeInstructions'] = list(map(str.strip, recipeData['recipeInstructions'].split("\n")))
         else:
             refinedData['recipeInstructions'] = [recipeData['recipeInstructions']]
     else:
         refinedData['recipeInstructions'] = None
+    refinedData['recipeInstructions'] = [i for i in refinedData['recipeInstructions'] if i]
 
     #keywords
     if 'keywords' in recipeData and isinstance(recipeData['keywords'], str):
@@ -85,7 +94,28 @@ def refineSchema(data, isGraph=None):
     elif 'keywords' in recipeData and (isinstance(recipeData['keywords'], dict) or isinstance(recipeData['keywords'], list)):
         refinedData['keywords'] = list(map(str.strip, recipeData['keywords']))
     else:
-        refinedData['keywords'] = None
+        refinedData['keywords'] = []
+    refinedData['keywords'] = [i for i in refinedData['keywords'] if i]
+
+    #nutrition
+    if 'nutrition' in recipeData and (isinstance(recipeData['nutrition'], dict) or isinstance(recipeData['nutrition'], list)):
+        refinedData['nutrition'] = dict()
+        refinedData['nutrition']['calories'] = recipeData['nutrition']['calories'] if 'calories' in recipeData['nutrition'] else None
+        refinedData['nutrition']['carbohydrateContent'] = recipeData['nutrition']['carbohydrateContent'] if 'carbohydrateContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['cholesterolContent'] = recipeData['nutrition']['cholesterolContent'] if 'cholesterolContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['fatContent'] = recipeData['nutrition']['fatContent'] if 'fatContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['fiberContent'] = recipeData['nutrition']['fiberContent'] if 'fiberContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['proteinContent'] = recipeData['nutrition']['proteinContent'] if 'proteinContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['saturatedFatContent'] = recipeData['nutrition']['saturatedFatContent'] if 'saturatedFatContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['servingSizevolume'] = recipeData['nutrition']['servingSizevolume'] if 'servingSizevolume' in recipeData['nutrition'] else None
+        refinedData['nutrition']['sodiumContent'] = recipeData['nutrition']['sodiumContent'] if 'sodiumContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['sugarContent'] = recipeData['nutrition']['sugarContent'] if 'sugarContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['transFatContent'] = recipeData['nutrition']['transFatContent'] if 'transFatContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['unsaturatedFatContent'] = recipeData['nutrition']['unsaturatedFatContent'] if 'unsaturatedFatContent' in recipeData['nutrition'] else None
+        refinedData['nutrition']['calorieContent'] = int(''.join(filter(str.isdigit, refinedData['nutrition']['calories'])))
+    else:
+        refinedData['nutrition'] = dict()
+
     return refinedData
 
 
