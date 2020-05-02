@@ -164,7 +164,7 @@ def transformSchemaToResponse(data):
             transformedData[key] = dict()
             for k in schemaDataMapping[key].values():
                 for j in k:
-                    transformedData[key][j] = data[key][schemaDataMapping[key][key][j]]
+                    transformedData[key][j] = data[key][schemaDataMapping[key][key][j]] if (key in data and schemaDataMapping[key][key][j] in data[key]) else None
         else:
             transformedData[key] = data[schemaDataMapping[key]]
     return transformedData
