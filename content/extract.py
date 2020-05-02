@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup as soup
 import json
+from Exception.custom_exceptions import NoSchemaResultSet
 
 global parse_url
 
@@ -59,7 +60,7 @@ def refineSchema(data, isGraph=None):
         if data['@type'] == 'Recipe':
             recipeData = data
     if len(data) == 0:
-        return False
+        raise NoSchemaResultSet
     refinedData['name'] = recipeData['name']
     refinedData['description'] = recipeData['description'] if 'description' in recipeData else None
     refinedData['url'] = recipeData['url'] if 'url' in recipeData else parse_url
