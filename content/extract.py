@@ -114,7 +114,7 @@ def refineSchema(data, isGraph=None):
 	#recipeIngredient
 	if 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], dict) or isinstance(recipeData['recipeIngredient'], list)):
 		refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient']))
-	elif 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], dict) ):
+	elif 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], str) ):
 		refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient'].split(',')))
 	else:
 		refinedData['recipeIngredient'] = [recipeData['recipeIngredient']] if 'recipeIngredient' in recipeData else None
