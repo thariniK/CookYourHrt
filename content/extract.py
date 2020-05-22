@@ -1,7 +1,9 @@
 import requests
 from bs4 import BeautifulSoup as soup
 import json
+import itertools
 from Exception.custom_exceptions import NoSchemaResultSet
+from utils.strutils import striphtml, striptabs
 
 global parse_url
 
@@ -15,9 +17,12 @@ schemaDataMapping = {
 	"cookingTime": "cookTime",
 	"totalTime": "cookTime",
 	"yieldsFor": "recipeYield",
+	"image": "image",
 	"ingredients": "recipeIngredient",
 	"instructions": "recipeInstructions",
 	"tags": "keywords",
+	"category": "recipeCategory",
+	"cuisine": "recipeCuisine",
 	"nutrition": {
 		"nutrition": {
 			"calories": "calories",
@@ -99,8 +104,18 @@ def refineSchema(data, isGraph=None):
 	if 'image' in recipeData:
 		if isinstance(recipeData['image'], dict):
 			refinedData['image'] = recipeData['image']['url'] if 'url' in recipeData['image'] else None
+		elif isinstance(recipeData['image'], list):
+			refinedData['image'] = recipeData['image'][0] if 0 in recipeData['image'] else None
+		elif isinstance(recipeData['image'], str):
+			refinedData['image'] = recipeData['image']
 	else:
 		refinedData['image'] = recipeData['image'] if 'image' in recipeData else None
+
+	if 'thumbnailUrl' in recipeData:
+		if isinstance(recipeData['thumbnailUrl'], dict):
+			refinedData['thumbnailUrl'] = recipeData['thumbnailUrl']['url'] if 'url' in recipeData['thumbnailUrl'] else None
+	else:
+		refinedData['thumbnailUrl'] = recipeData['thumbnailUrl'] if 'thumbnailUrl' in recipeData else None
 	
 	#autor
 	if 'author' in recipeData:
@@ -118,8 +133,8 @@ def refineSchema(data, isGraph=None):
 		refinedData['recipeIngredient'] = list(map(str.strip, recipeData['recipeIngredient'].split(',')))
 	else:
 		refinedData['recipeIngredient'] = [recipeData['recipeIngredient']] if 'recipeIngredient' in recipeData else None
-	if isinstance(refinedData['recipeIngredient'], dict) and len(refinedData['recipeIngredient']):
-		refinedData['recipeIngredient'] = [i for i in recipeData['recipeIngredient'] if i]
+	if (isinstance(refinedData['recipeIngredient'], dict) or isinstance(refinedData['recipeIngredient'], list)) and len(refinedData['recipeIngredient']):
+		refinedData['recipeIngredient'] = [striptabs(striphtml(i)) for i in recipeData['recipeIngredient'] if i]
 
 	#recipeInstructions
 	if 'recipeInstructions' in recipeData and (isinstance(recipeData['recipeInstructions'], dict) or isinstance(recipeData['recipeInstructions'], list)):
@@ -147,8 +162,8 @@ def refineSchema(data, isGraph=None):
 			refinedData['recipeInstructions'] = [recipeData['recipeInstructions']]
 	else:
 		refinedData['recipeInstructions'] = None
-	if isinstance(refinedData['recipeInstructions'], dict) and len(refinedData['recipeInstructions']):
-		refinedData['recipeInstructions'] = [i for i in refinedData['recipeInstructions'] if i]
+	if (isinstance(refinedData['recipeInstructions'], dict) or isinstance(refinedData['recipeInstructions'], list)) and len(refinedData['recipeInstructions']):
+		refinedData['recipeInstructions'] = [striptabs(striphtml(i)) for i in refinedData['recipeInstructions'] if i]
 
 	#keywords
 	if 'keywords' in recipeData and isinstance(recipeData['keywords'], str):
@@ -159,6 +174,22 @@ def refineSchema(data, isGraph=None):
 		refinedData['keywords'] = []
 	if isinstance(refinedData['keywords'], dict) and len(refinedData['keywords']):
 		refinedData['keywords'] = [i for i in refinedData['keywords'] if i] if len(refinedData['keywords']) else None
+
+	#category
+	if 'recipeCategory' in recipeData and isinstance(recipeData['recipeCategory'], str):
+		refinedData['recipeCategory'] = list(map(str.strip, recipeData['recipeCategory'].split(',')))
+	elif 'recipeCategory' in recipeData and (isinstance(recipeData['recipeCategory'], dict) or isinstance(recipeData['recipeCategory'], list)):
+		refinedData['recipeCategory'] = list(map(str.strip, recipeData['recipeCategory']))
+	else:
+		refinedData['recipeCategory'] = []
+
+	#cuisine
+	if 'recipeCuisine' in recipeData and isinstance(recipeData['recipeCuisine'], str):
+		refinedData['recipeCuisine'] = list(map(str.strip, recipeData['recipeCuisine'].split(',')))
+	elif 'recipeCuisine' in recipeData and (isinstance(recipeData['recipeCuisine'], dict) or isinstance(recipeData['recipeCuisine'], list)):
+		refinedData['recipeCuisine'] = list(map(str.strip, recipeData['recipeCuisine']))
+	else:
+		refinedData['recipeCuisine'] = []
 
 	#nutrition
 	if 'nutrition' in recipeData and (isinstance(recipeData['nutrition'], dict) or isinstance(recipeData['nutrition'], list)):
