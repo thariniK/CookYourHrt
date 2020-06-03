@@ -117,14 +117,21 @@ def refineSchema(data, isGraph=None):
 	else:
 		refinedData['thumbnailUrl'] = recipeData['thumbnailUrl'] if 'thumbnailUrl' in recipeData else None
 	
-	#autor
+	#author
 	if 'author' in recipeData:
-		if isinstance(recipeData['author'], dict):
-			refinedData['author'] = recipeData['author']['name'] if 'name' in recipeData['author'] else None
+		refinedData['author'] = []
+		if isinstance(recipeData['author'], dict) or isinstance(recipeData['author'], list):
+			if isinstance(recipeData['author'], list):
+				for a in recipeData['author']:
+					refinedData['author'].append(a['name'] if 'name' in a else None)
+			elif isinstance(recipeData['author'], dict):		
+				refinedData['author'].append(recipeData['author']['name'] if 'name' in recipeData['author'] else None)
+			else:
+				refinedData['author'].append(recipeData['author'])
 		else:
-			refinedData['author'] = recipeData['author']
+			refinedData['author'].append(recipeData['author'])
 	else:
-		refinedData['author'] = recipeData['author'] if 'author' in recipeData else None
+		refinedData['author'].append(recipeData['author'] if 'author' in recipeData else None)
 	
 	#recipeIngredient
 	if 'recipeIngredient' in recipeData and (isinstance(recipeData['recipeIngredient'], dict) or isinstance(recipeData['recipeIngredient'], list)):
@@ -139,9 +146,14 @@ def refineSchema(data, isGraph=None):
 	#recipeInstructions
 	if 'recipeInstructions' in recipeData and (isinstance(recipeData['recipeInstructions'], dict) or isinstance(recipeData['recipeInstructions'], list)):
 		refinedData['recipeInstructions'] = []
-		for instruction in recipeData['recipeInstructions']:
-			if 'text' in instruction:
-				refinedData['recipeInstructions'].append(instruction['text'].strip())
+		if isinstance(recipeData['recipeInstructions'][0], list):
+			for instruction in recipeData['recipeInstructions'][0]:
+				if 'text' in instruction:
+					refinedData['recipeInstructions'].append(instruction['text'].strip())
+		else:
+			for instruction in recipeData['recipeInstructions']:
+				if 'text' in instruction:
+					refinedData['recipeInstructions'].append(instruction['text'].strip())
 	elif 'recipeInstructions' in recipeData and isinstance(recipeData['recipeInstructions'], str):
 		refinedData['recipeInstructions'] = []
 		if "<ol" in recipeData['recipeInstructions'] or "<ul" in recipeData['recipeInstructions']:
