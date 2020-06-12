@@ -51,7 +51,7 @@ def getRecipeJSON():
     elif (response == False and errorResponse):
         return jsonify({'status': 'failure', 'result': errorResponse}), errorCode
     else:
-            return jsonify({'status': 'failure', 'result': 'we couldn\'t fetch the recipe you\'re looking for'}), errorCode
+        return jsonify({'status': 'failure', 'result': 'We couldn\'t fetch the recipe you\'re looking for'}), errorCode
 
 
 def validateUrl(url):
