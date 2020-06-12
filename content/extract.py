@@ -237,8 +237,10 @@ def refineJSONSchema(data):
 	global parse_url
 	recipeData = False
 	isRecipeFound = False
+	isGraphPresent = False
 	for d in data:
 		if '@graph' in d:
+			isGraphPresent = True
 			for value in d['@graph']:
 				if isinstance(value['@type'], str) and value['@type'].strip().lower() == 'recipe':
 					recipeData = value
@@ -249,11 +251,14 @@ def refineJSONSchema(data):
 				recipeData = d
 				isRecipeFound = True
 				break
-		if '@graph' in d and isRecipeFound == False:
+
+	if isGraphPresent and isRecipeFound == False:
+		for d in data:
 			if isinstance(d['@type'], str) and d['@type'].strip().lower() == 'recipe':
 				recipeData = d
 				isRecipeFound = True
 				break
+
 	if isRecipeFound == False or len(recipeData) == 0:
 		return False
 	refinedData = refineAllTypesRecipeData(recipeData)
@@ -287,10 +292,17 @@ def refineEmbeddedSchema(data):
 		return False
 	recipeData = dict()
 	for d in data:
-		if 'type' in d and 'Recipe'.lower() in d['type'].lower():
-			recipeData = d['properties']
+		if 'type' in d and 'recipe' in d['type'].lower():
+			recipeData = d['properties'] if 'properties' in d else d
 	if len(recipeData) == 0:
 		return False
+
+	# if nutrition data is present and is defined in its 'properties'
+	if 'nutrition' in recipeData and 'properties' in recipeData['nutrition']:
+		nutrition_data = recipeData['nutrition']['properties']
+		del recipeData['nutrition']
+		recipeData['nutrition'] = nutrition_data
+
 	refinedData = refineAllTypesRecipeData(recipeData)
 	return refinedData
 
