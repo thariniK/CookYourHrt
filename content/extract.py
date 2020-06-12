@@ -244,12 +244,12 @@ def refineJSONSchema(data):
 					recipeData = value
 					isRecipeFound = True
 					break
-		if '@graph' in d and isRecipeFound == False:
+		else:
 			if isinstance(d['@type'], str) and d['@type'].strip().lower() == 'recipe':
 				recipeData = d
 				isRecipeFound = True
 				break
-		else:
+		if '@graph' in d and isRecipeFound == False:
 			if isinstance(d['@type'], str) and d['@type'].strip().lower() == 'recipe':
 				recipeData = d
 				isRecipeFound = True
