@@ -303,6 +303,12 @@ def refineEmbeddedSchema(data):
 		del recipeData['nutrition']
 		recipeData['nutrition'] = nutrition_data
 
+	# image property modification
+	if 'image' in recipeData and 'properties' in recipeData['image']:
+		image_data = recipeData['image']['properties']
+		del recipeData['image']
+		recipeData['image'] = image_data
+
 	refinedData = refineAllTypesRecipeData(recipeData)
 	return refinedData
 

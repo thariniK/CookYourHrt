@@ -5,6 +5,7 @@ from content.send_response import recipe_api
 
 app = Flask(__name__)
 
+app.config['JSON_AS_ASCII'] = False
 app.register_blueprint(recipe_api, url_prefix='/v1')
 
 if __name__ == "__main__":  # Makes sure this is the main process
