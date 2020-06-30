@@ -118,12 +118,20 @@ def refineAllTypesRecipeData(recipeData):
 			for instruction in recipeData['recipeInstructions'][0]:
 				if isinstance(instruction, dict) and 'text' in instruction:
 					refinedData['recipeInstructions'].append(instruction['text'].strip())
+				elif isinstance(instruction, dict) and 'itemListElement' in instruction:
+					for ins in instruction['itemListElement']:
+						if isinstance(ins, dict) and 'text' in ins:
+							refinedData['recipeInstructions'].append(ins['text'].strip())
 				elif isinstance(instruction, str):
 					refinedData['recipeInstructions'].append(instruction.strip())
 		else:
 			for instruction in recipeData['recipeInstructions']:
 				if isinstance(instruction, dict) and 'text' in instruction:
 					refinedData['recipeInstructions'].append(instruction['text'].strip())
+				elif isinstance(instruction, dict) and 'itemListElement' in instruction:
+					for ins in instruction['itemListElement']:
+						if isinstance(ins, dict) and 'text' in ins:
+							refinedData['recipeInstructions'].append(ins['text'].strip())
 				elif isinstance(instruction, str):
 					refinedData['recipeInstructions'].append(instruction.strip())
 	elif 'recipeInstructions' in recipeData and isinstance(recipeData['recipeInstructions'], str):
