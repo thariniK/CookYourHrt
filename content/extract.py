@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup as soup
 import json
+import re
 import extruct
 from w3lib.html import get_base_url
 from Exception.custom_exceptions import NoSchemaResultSet
@@ -114,7 +115,7 @@ def refineAllTypesRecipeData(recipeData):
 	if 'recipeInstructions' in recipeData and (
 			isinstance(recipeData['recipeInstructions'], dict) or isinstance(recipeData['recipeInstructions'], list)):
 		refinedData['recipeInstructions'] = []
-		if isinstance(recipeData['recipeInstructions'][0], list):
+		if 0 in recipeData['recipeInstructions'] and isinstance(recipeData['recipeInstructions'][0], list):
 			for instruction in recipeData['recipeInstructions'][0]:
 				if isinstance(instruction, dict) and 'text' in instruction:
 					refinedData['recipeInstructions'].append(instruction['text'].strip())
@@ -124,6 +125,35 @@ def refineAllTypesRecipeData(recipeData):
 							refinedData['recipeInstructions'].append(ins['text'].strip())
 				elif isinstance(instruction, str):
 					refinedData['recipeInstructions'].append(instruction.strip())
+		elif isinstance(recipeData['recipeInstructions'], list):
+			for instruction in recipeData['recipeInstructions']:
+				if isinstance(instruction, dict) and 'text' in instruction:
+					refinedData['recipeInstructions'].append(instruction['text'].strip())
+				elif isinstance(instruction, dict) and 'itemListElement' in instruction:
+					for ins in instruction['itemListElement']:
+						if isinstance(ins, dict) and 'text' in ins:
+							refinedData['recipeInstructions'].append(ins['text'].strip())
+				elif isinstance(instruction, str):
+					refinedData['recipeInstructions'].append(instruction.strip())
+		elif isinstance(recipeData['recipeInstructions'], dict):
+			if 'properties' in recipeData['recipeInstructions']:
+				if isinstance(recipeData['recipeInstructions']['properties'], dict) and 'itemListElement' in recipeData['recipeInstructions']['properties']:
+					for ins in recipeData['recipeInstructions']['properties']['itemListElement']:
+						if isinstance(ins, dict) and 'text' in ins:
+							refinedData['recipeInstructions'].append(ins['text'].strip())
+						elif isinstance(ins, dict) and 'properties' in ins:
+							if isinstance(ins, dict) and 'text' in ins['properties']:
+								refinedData['recipeInstructions'].append(ins['properties']['text'].strip())
+			else:
+				for instruction in recipeData['recipeInstructions']:
+					if isinstance(instruction, dict) and 'text' in instruction:
+						refinedData['recipeInstructions'].append(instruction['text'].strip())
+					elif isinstance(instruction, dict) and 'itemListElement' in instruction:
+						for ins in instruction['itemListElement']:
+							if isinstance(ins, dict) and 'text' in ins:
+								refinedData['recipeInstructions'].append(ins['text'].strip())
+					elif isinstance(instruction, str):
+						refinedData['recipeInstructions'].append(instruction.strip())
 		else:
 			for instruction in recipeData['recipeInstructions']:
 				if isinstance(instruction, dict) and 'text' in instruction:
@@ -208,8 +238,8 @@ def refineAllTypesRecipeData(recipeData):
 		refinedData['nutrition']['transFatContent'] = recipeData['nutrition']['transFatContent'] if 'transFatContent' in recipeData['nutrition'] else None
 		refinedData['nutrition']['unsaturatedFatContent'] = recipeData['nutrition'][
 			'unsaturatedFatContent'] if 'unsaturatedFatContent' in recipeData['nutrition'] else None
-		refinedData['nutrition']['calorieContent'] = int(
-			''.join(filter(str.isdigit, refinedData['nutrition']['calories'])))
+		calorieCount = re.findall('\d*\.?\d+',refinedData['nutrition']['calories'])
+		refinedData['nutrition']['calorieContent'] = int(float(calorieCount[0])) if len(calorieCount) else None
 	else:
 		refinedData['nutrition'] = dict()
 	return refinedData
