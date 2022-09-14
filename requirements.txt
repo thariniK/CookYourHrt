@@ -61,7 +61,6 @@ six==1.16.0
 soupsieve==2.2.1
 tornado==6.1
 Twisted==21.7.0
-twisted-iocpsupport==1.0.2
 typing-extensions==3.10.0.2
 tzdata==2022.1
 tzlocal==4.2
